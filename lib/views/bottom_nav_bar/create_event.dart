@@ -1,17 +1,20 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:latlong2/latlong.dart';
 
 import 'package:dotted_border/dotted_border.dart';
 import 'package:event/controller/data_controller.dart';
 import 'package:event/model/event_media_model.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../utils/app_color.dart';
 import '../../widgets/my_widgets.dart';
+
 
 class CreateEventView extends StatefulWidget {
   CreateEventView({Key? key}) : super(key: key);
@@ -26,7 +29,7 @@ class _CreateEventViewState extends State<CreateEventView> {
   TextEditingController dateController = TextEditingController();
   TextEditingController timeController = TextEditingController();
   TextEditingController titleController = TextEditingController();
-  TextEditingController locationController = TextEditingController();
+  LatLng? locationController ;
   TextEditingController priceController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController tagsController = TextEditingController();
@@ -43,7 +46,7 @@ class _CreateEventViewState extends State<CreateEventView> {
     dateController.clear();
     timeController.clear();
     titleController.clear();
-    locationController.clear();
+    locationController = null;
     priceController.clear();
     descriptionController.clear();
     tagsController.clear();
@@ -377,27 +380,45 @@ class _CreateEventViewState extends State<CreateEventView> {
                 SizedBox(
                   height: 20,
                 ),
-                myTextField(
-                    bool: false,
-                    icon: 'assets/location.png',
-                    text: 'Location',
-                    controller: locationController,
-                    validator: (String input) {
-                      if (input.isEmpty) {
-                        Get.snackbar('Opps', "Location is required.",
-                            colorText: Colors.white,
-                            backgroundColor: Colors.blue);
-                        return '';
-                      }
-
-                      if (input.length < 3) {
-                        Get.snackbar('Opps', "Location is Invalid.",
-                            colorText: Colors.white,
-                            backgroundColor: Colors.blue);
-                        return '';
-                      }
-                      return null;
-                    }),
+                Text(
+                'Select Location:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              Container(
+                height: 300,
+                child: FlutterMap(
+                  options: MapOptions(
+                   initialCenter: LatLng(36.8065, 10.1815), // Tunis, Tunisia
+                    initialZoom: 12.0,
+                    onTap: (tapPosition, point) {
+                      setState(() {
+                        locationController = point;
+                      });
+                    },
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://api.mapbox.com/styles/v1/mapbox/streets-v11/tiles/{z}/{x}/{y}?access_token=pk.eyJ1Ijoia2hhZGlqYTEyMzk5IiwiYSI6ImNtNDhya2Y0bTAybW0ya3NkNmd3YXd5NTYifQ.Xt-3ZUh6sCp3iRVG-LacXA',
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    if (locationController != null)
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: locationController!,
+                            child: Icon(
+                              Icons.location_pin,
+                              color: Colors.red,
+                              size: 30,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
                 SizedBox(
                   height: 20,
                 ),
@@ -978,7 +999,10 @@ class _CreateEventViewState extends State<CreateEventView> {
                         Map<String, dynamic> eventData = {
                           'event': event_type,
                           'event_name': titleController.text,
-                          'location': locationController.text,
+                          'location': {
+                          'latitude': locationController!.latitude,
+                          'longitude': locationController!.longitude,
+                          },
                           'date':
                           '${date!.day}-${date!.month}-${date!.year}',
                           'start_time': startTimeController.text,

@@ -51,7 +51,9 @@ dependencies:
   timeago: ^3.7.0
   cloudinary_api: ^1.0.2
   cloudinary_sdk: ^5.0.0+1
+  flutter_map: ^7.0.2
 
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
